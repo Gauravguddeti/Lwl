@@ -1,0 +1,78 @@
+# AI Telecaller System - OpenAI Realtime API Integration
+# Core Framework
+python-dotenv==1.0.0
+pydantic==2.8.2
+
+# WebSocket Support for Twilio Media Streams + OpenAI Realtime
+flask-sock==0.6.0
+websockets==12.0
+asyncio
+
+# Audio Processing for Realtime API
+wave
+audioop
+
+# LangChain and LangGraph for AI Intelligence
+langchain==0.2.16
+langchain-community==0.2.16
+langchain-core==0.2.38
+langchain-openai==0.1.23
+langgraph==0.2.14
+langsmith==0.1.99
+
+# Vector Database and RAG
+chromadb==0.5.5
+sentence-transformers==3.0.1
+faiss-cpu==1.8.0
+tiktoken==0.7.0
+
+# OpenAI API (for embeddings, LLMs, and Realtime API)
+openai==1.42.0
+
+# Database
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.25
+
+# Twilio Voice API
+twilio==9.7.0
+
+# Web Framework for Webhooks
+flask==2.3.3
+flask-cors==4.0.0
+gunicorn==21.2.0
+
+# AWS Services
+boto3==1.34.144
+botocore==1.34.144
+
+# HTTP and Utilities
+requests==2.31.0
+urllib3==2.0.7
+
+# Date and Time
+python-dateutil==2.9.0.post0
+pytz==2024.1
+
+# JSON and Data Processing
+jsonschema==4.19.2
+
+# Local Storage and File Management
+pathlib
+os-sys
+
+# Audio Processing (for call recordings)
+pydub==0.25.1
+speech-recognition==3.10.0
+
+# Sentiment Analysis
+textblob==0.17.1
+nltk==3.8.1
+
+# Memory and caching
+diskcache==5.6.3
+
+# Async Support (built-in, no installation needed)
+# asyncio is part of Python standard library
+
+# Additional HTTP support
+aiohttp==3.9.1

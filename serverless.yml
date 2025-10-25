@@ -1,0 +1,260 @@
+service: ai-ivr-system-202509241612
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ${env:AWS_REGION, 'us-west-2'}
+  stage: ${opt:stage, 'dev'}
+  timeout: 300  # 5 minutes for IVR calls
+  memorySize: 1024
+  
+  environment:
+    # Database Configuration
+    DATABASE_URL: postgresql://${env:POSTGRES_USER}:${env:POSTGRES_PASSWORD}@${env:POSTGRES_HOST}:${env:POSTGRES_PORT}/${env:POSTGRES_DB}
+    DB_HOST: ${env:DB_HOST}
+    DB_PORT: ${env:DB_PORT}
+    DB_NAME: ${env:DB_NAME}
+    DB_USER: ${env:DB_USER}
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    DB_SSL_MODE: ${env:DB_SSL_MODE, 'prefer'}
+    DB_SCHEMA: ${env:DB_SCHEMA, 'public'}
+    
+    # Proxy Configuration
+    PROXY_API_URL: ${env:PROXY_API_URL}
+    PROXY_API_KEY: ${env:PROXY_API_KEY}
+    USE_PROXY: ${env:USE_PROXY, 'true'}
+    
+    # AWS Services (credentials handled automatically by AWS Lambda)
+    
+    # Twilio Configuration
+    TWILIO_ACCOUNT_SID: ${env:TWILIO_ACCOUNT_SID}
+    TWILIO_AUTH_TOKEN: ${env:TWILIO_AUTH_TOKEN}
+    TWILIO_PHONE_NUMBER: ${env:TWILIO_PHONE_NUMBER}
+    
+    # Email Configuration
+    EMAIL_SERVICE_TYPE: ${env:EMAIL_SERVICE_TYPE, 'ses_custom_domain'}
+    SES_SENDER_EMAIL: ${env:SES_SENDER_EMAIL}
+    SES_CUSTOM_DOMAIN: ${env:SES_CUSTOM_DOMAIN}
+    SES_SUBDOMAIN: ${env:SES_SUBDOMAIN}
+    
+    # SMTP Configuration
+    EMAIL_SMTP_SERVER: ${env:EMAIL_SMTP_SERVER, 'smtp.gmail.com'}
+    EMAIL_SMTP_PORT: ${env:EMAIL_SMTP_PORT, '587'}
+    EMAIL_USERNAME: ${env:EMAIL_USERNAME}
+    EMAIL_PASSWORD: ${env:EMAIL_PASSWORD}
+    
+    # SMS Configuration
+    SMS_SENDER_ID: ${env:SMS_SENDER_ID, 'EduServices'}
+    SMS_SANDBOX_MODE: ${env:SMS_SANDBOX_MODE, 'false'}
+    
+    # OpenAI Configuration
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+    OPENAI_REALTIME_MODEL: ${env:OPENAI_REALTIME_MODEL, 'gpt-4o-mini-realtime-preview-2024-12-17'}
+    OPENAI_REALTIME_VOICE: ${env:OPENAI_REALTIME_VOICE, 'alloy'}
+    AI_MODEL: ${env:AI_MODEL, 'gpt-4o-mini'}
+    AI_TEMPERATURE: ${env:AI_TEMPERATURE, '0.7'}
+    AI_MAX_TOKENS: ${env:AI_MAX_TOKENS, '1000'}
+    
+    # Base URL for webhooks
+    BASE_URL: https://${self:custom.apiDomain}
+    
+    # Application Configuration
+    DEBUG: ${env:DEBUG, 'false'}
+    LOCAL_DEVELOPMENT: ${env:LOCAL_DEVELOPMENT, 'false'}
+  
+  iamRoleStatements:
+    # SES Permissions
+    - Effect: Allow
+      Action:
+        - ses:SendEmail
+        - ses:SendRawEmail
+        - ses:SendTemplatedEmail
+        - ses:CreateTemplate
+        - ses:UpdateTemplate
+        - ses:GetTemplate
+        - ses:ListTemplates
+        - ses:DeleteTemplate
+        - ses:GetSendStatistics
+        - ses:GetSendQuota
+        - ses:GetIdentityVerificationAttributes
+      Resource: "*"
+    
+    # SNS Permissions
+    - Effect: Allow
+      Action:
+        - sns:Publish
+        - sns:GetSMSAttributes
+        - sns:SetSMSAttributes
+        - sns:ListPhoneNumbersOptedOut
+        - sns:OptInPhoneNumber
+        - sns:ListTopics
+        - sns:CreateTopic
+        - sns:GetTopicAttributes
+      Resource: "*"
+    
+    # CloudWatch Logs
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+        - logs:DescribeLogGroups
+        - logs:DescribeLogStreams
+      Resource: "*"
+    
+    # VPC Access (if needed for database)
+    - Effect: Allow
+      Action:
+        - ec2:CreateNetworkInterface
+        - ec2:DescribeNetworkInterfaces
+        - ec2:DeleteNetworkInterface
+      Resource: "*"
+
+functions:
+  # AI IVR API - Main orchestration service
+  ai-ivr-api:
+    handler: ai_ivr_lambda_handler.lambda_handler
+    description: "AI IVR API with database integration for telecaller system"
+    timeout: 300
+    memorySize: 1024
+    events:
+      - http:
+          path: /
+          method: get
+          cors: true
+      - http:
+          path: /ivr/{proxy+}
+          method: any
+          cors: true
+    environment:
+      SERVICE_TYPE: ai_ivr_api
+
+  # Email/SMS Integration API
+  email-sms-api:
+    handler: integrated_email_sms_lambda_handler.lambda_handler
+    description: "Integrated Email and SMS API service"
+    timeout: 60
+    events:
+      - http:
+          path: /email
+          method: post
+          cors: true
+      - http:
+          path: /email/bulk
+          method: post
+          cors: true
+      - http:
+          path: /email/status
+          method: get
+          cors: true
+      - http:
+          path: /sms/send
+          method: post
+          cors: true
+      - http:
+          path: /sms/bulk
+          method: post
+          cors: true
+      - http:
+          path: /sms/status
+          method: get
+          cors: true
+      - http:
+          path: /templated-email
+          method: post
+          cors: true
+      - http:
+          path: /templated-email/login
+          method: post
+          cors: true
+      - http:
+          path: /templated-email/registration
+          method: post
+          cors: true
+      - http:
+          path: /templated-email/{template_type}
+          method: post
+          cors: true
+      - http:
+          path: /api-status
+          method: get
+          cors: true
+    environment:
+      SERVICE_TYPE: email_sms_api
+
+  # Twilio Webhook Handler
+  twilio-webhook:
+    handler: twilio_webhook_handler.lambda_handler
+    description: "Handle Twilio call status webhooks"
+    timeout: 30
+    events:
+      - http:
+          path: /webhooks/twilio/call-status
+          method: post
+          cors: true
+      - http:
+          path: /webhooks/twilio/recording
+          method: post
+          cors: true
+# Plugins for serverless deployment
+plugins:
+  - serverless-python-requirements
+
+# Custom configuration
+custom:
+  apiDomain: ${self:service}-${self:provider.stage}.execute-api.${self:provider.region}.amazonaws.com
+  
+  # Python requirements configuration
+  pythonRequirements:
+    dockerizePip: false
+    slim: false
+    strip: false
+    fileName: requirements_lambda.txt
+    pipCmdExtraArgs:
+      - --no-cache-dir
+
+# Package configuration
+package:
+  individually: false
+  exclude:
+    - node_modules/**
+    - .git/**
+    - .serverless/**
+    - __pycache__/**
+    - "*.pyc"
+    - tests/**
+    - .pytest_cache/**
+    - call_recordings/**
+    - call_transcriptions/**
+    - email_sms_api_package/**
+    - working_ivr_system_package/**
+    - .env
+    - README.md
+    - "*.md"
+    - postman_*.json
+    - package.json
+    - package-lock.json
+    - requirements_minimal.txt
+    - .gitignore
+    - template.yaml.backup
+  include:
+    - app/**
+    - ai_ivr_api.py
+    - integrated_email_sms_api.py
+    - requirements.txt
+
+resources:
+  Outputs:
+    ApiURL:
+      Description: "API Gateway endpoint URL"
+      Value:
+        Fn::Join:
+          - ""
+          - - "https://"
+            - Ref: ApiGatewayRestApi
+            - ".execute-api."
+            - ${self:provider.region}
+            - ".amazonaws.com/"
+            - ${self:provider.stage}
+      Export:
+        Name: ${self:service}-${self:provider.stage}-api-url

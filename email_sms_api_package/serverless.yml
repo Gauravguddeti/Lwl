@@ -1,0 +1,218 @@
+service: email-sms-api-package
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ${env:AWS_REGION, 'us-west-2'}
+  stage: ${env:API_STAGE, 'dev'}
+  environment:
+    AWS_REGION: ${env:AWS_REGION, 'us-west-2'}
+    AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY}
+    SES_SENDER_EMAIL: ${env:SES_SENDER_EMAIL, 'support@f5universe.com'}
+    CUSTOM_DOMAIN: ${env:CUSTOM_DOMAIN, 'f5universe.com'}
+    SUBDOMAIN: ${env:SUBDOMAIN, 'mail.futuristic5.com'}
+    EMAIL_USERNAME: ${env:EMAIL_USERNAME}
+    EMAIL_PASSWORD: ${env:EMAIL_PASSWORD}
+    SMS_SENDER_ID: ${env:SMS_SENDER_ID, 'IVR'}
+    SMS_SANDBOX_MODE: ${env:SMS_SANDBOX_MODE, 'true'}
+    BRAND_LOGO_URL: ${env:BRAND_LOGO_URL, 'https://k43feq9x55.execute-api.us-west-2.amazonaws.com/dev/logo.png'}
+    BRAND_COLOR: ${env:BRAND_COLOR, '#007bff'}
+    BRAND_BG_COLOR: ${env:BRAND_BG_COLOR, '#f8f9fa'}
+  
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - ses:SendEmail
+        - ses:SendRawEmail
+        - ses:SendTemplatedEmail
+        - ses:CreateTemplate
+        - ses:UpdateTemplate
+        - ses:GetTemplate
+        - ses:ListTemplates
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - sns:Publish
+        - sns:GetSMSAttributes
+        - sns:SetSMSAttributes
+        - sns:CreateTopic
+        - sns:Subscribe
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: "*"
+
+functions:
+  email-api:
+    handler: api/email_handler.lambda_handler
+    description: Email API - Send emails via SMTP or SES
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: /email
+          method: get
+          cors: true
+      - http:
+          path: /email
+          method: post
+          cors: true
+      - http:
+          path: /email/status
+          method: get
+          cors: true
+
+  sms-api:
+    handler: api/sms_handler.lambda_handler
+    description: SMS API - Send SMS via Amazon SNS
+    timeout: 30
+    memorySize: 256
+    events:
+      - http:
+          path: /sms/send
+          method: post
+          cors: true
+      - http:
+          path: /sms/bulk
+          method: post
+          cors: true
+      - http:
+          path: /sms/sandbox
+          method: post
+          cors: true
+      - http:
+          path: /sms/status
+          method: get
+          cors: true
+
+  templated-email-api:
+    handler: api/templated_email_handler.lambda_handler
+    description: Templated Email API - Professional email templates
+    timeout: 45
+    memorySize: 512
+    events:
+      - http:
+          path: /templated-email/send
+          method: post
+          cors: true
+      - http:
+          path: /templated-email/signup
+          method: post
+          cors: true
+      - http:
+          path: /templated-email/otp
+          method: post
+          cors: true
+      - http:
+          path: /templated-email/password-reset
+          method: post
+          cors: true
+      - http:
+          path: /templated-email/welcome
+          method: post
+          cors: true
+      - http:
+          path: /templated-email/order
+          method: post
+          cors: true
+      - http:
+          path: /templated-email/status
+          method: get
+          cors: true
+
+package:
+  individually: false
+  excludeDevDependencies: true
+  exclude:
+    - node_modules/**
+    - .git/**
+    - .gitignore
+    - README.md
+    - package.json
+    - package-lock.json
+    - .env
+    - .env.*
+    - tests/**
+    - __pycache__/**
+    - "*.pyc"
+    - .pytest_cache/**
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: false
+    slim: true
+    strip: false
+    noDeps: false
+    fileName: requirements.txt
+
+resources:
+  Resources:
+    # API Gateway CORS Configuration
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'RestApiApigEvent'
+    
+    GatewayResponseDefault5XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'*'"
+        ResponseType: DEFAULT_5XX
+        RestApiId:
+          Ref: 'RestApiApigEvent'
+
+  Outputs:
+    EmailApiUrl:
+      Description: "URL for Email API"
+      Value:
+        Fn::Join:
+          - ""
+          - - "https://"
+            - Ref: RestApiApigEvent
+            - ".execute-api."
+            - ${self:provider.region}
+            - ".amazonaws.com/"
+            - ${self:provider.stage}
+            - "/email"
+    
+    SmsApiUrl:
+      Description: "URL for SMS API"
+      Value:
+        Fn::Join:
+          - ""
+          - - "https://"
+            - Ref: RestApiApigEvent
+            - ".execute-api."
+            - ${self:provider.region}
+            - ".amazonaws.com/"
+            - ${self:provider.stage}
+            - "/sms"
+    
+    TemplatedEmailApiUrl:
+      Description: "URL for Templated Email API"
+      Value:
+        Fn::Join:
+          - ""
+          - - "https://"
+            - Ref: RestApiApigEvent
+            - ".execute-api."
+            - ${self:provider.region}
+            - ".amazonaws.com/"
+            - ${self:provider.stage}
+            - "/templated-email"

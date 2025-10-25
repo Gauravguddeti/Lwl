@@ -1,0 +1,392 @@
+{
+	"info": {
+		"_postman_id": "integrated-email-sms-api",
+		"name": "Integrated Email/SMS API - IVR System",
+		"description": "Complete API collection for testing the integrated email and SMS services in the IVR system. Clean, working APIs extracted from the email_sms_api_package.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Overall Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/status",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Email Service",
+			"item": [
+				{
+					"name": "Send SMTP Email (Gmail)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email_type\": \"smtp\",\n    \"to_email\": \"test@example.com\",\n    \"subject\": \"Test SMTP Email from IVR System\",\n    \"body\": \"This is a test email sent via SMTP (Gmail) from the integrated IVR system.\",\n    \"is_html\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/email",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send SES Custom Domain Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email_type\": \"customdomain\",\n    \"to_email\": \"test@example.com\",\n    \"subject\": \"Test SES Custom Domain Email\",\n    \"body\": \"<h1>Hello from IVR System!</h1><p>This is an HTML email sent via SES Custom Domain.</p>\",\n    \"is_html\": true,\n    \"sender_email\": \"support@f5universe.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/email",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send SES Subdomain Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email_type\": \"subdomain\",\n    \"to_email\": \"test@example.com\",\n    \"subject\": \"Test SES Subdomain Email\",\n    \"body\": \"This is a test email sent via SES Subdomain from the IVR system.\",\n    \"is_html\": false,\n    \"sender_email\": \"noreply@mail.futuristic5.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/email",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Email Service Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/email/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"email",
+								"status"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "SMS Service",
+			"item": [
+				{
+					"name": "Send Single SMS",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone_number\": \"+1234567890\",\n    \"message\": \"Hello from IVR System! This is a test SMS message.\",\n    \"sender_id\": \"IVR\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/sms/send",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sms",
+								"send"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Bulk SMS",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone_numbers\": [\"+1234567890\", \"+0987654321\"],\n    \"message\": \"Bulk SMS test from IVR System - sent to multiple recipients!\",\n    \"sender_id\": \"IVR\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/sms/bulk",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sms",
+								"bulk"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SMS Service Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/sms/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sms",
+								"status"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Templated Email Service",
+			"item": [
+				{
+					"name": "Send OTP Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to\": \"user@example.com\",\n    \"username\": \"John Doe\",\n    \"otp_code\": \"123456\",\n    \"expiry_minutes\": 10\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/templated-email/otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"templated-email",
+								"otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Welcome Email with PDF",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to\": \"user@example.com\",\n    \"username\": \"John Doe\",\n    \"company_name\": \"Tech Corp\",\n    \"course_name\": \"AI Fundamentals Course\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/templated-email/welcome",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"templated-email",
+								"welcome"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Order Confirmation Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to\": \"customer@example.com\",\n    \"username\": \"Jane Smith\",\n    \"order_id\": \"ORD-2024-001\",\n    \"order_total\": \"$299.99\",\n    \"items\": [\n        {\n            \"name\": \"Premium Course Access\",\n            \"quantity\": 1,\n            \"price\": \"$199.99\"\n        },\n        {\n            \"name\": \"Certification Fee\",\n            \"quantity\": 1,\n            \"price\": \"$100.00\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/templated-email/order",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"templated-email",
+								"order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Templated Email Service Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/templated-email/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"templated-email",
+								"status"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "IVR Integration Endpoints",
+			"item": [
+				{
+					"name": "Send OTP (Both SMS & Email)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phone\": \"+1234567890\",\n    \"email\": \"customer@example.com\",\n    \"name\": \"John Doe\",\n    \"otp\": \"567890\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ivr/send-otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ivr",
+								"send-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Call Summary",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"customer@example.com\",\n    \"name\": \"John Doe\",\n    \"call_details\": {\n        \"reference\": \"CALL-2024-001\",\n        \"duration\": \"8 minutes 32 seconds\",\n        \"status\": \"Completed Successfully\",\n        \"purpose\": \"Course Inquiry\",\n        \"next_steps\": \"Enrollment process initiated\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/ivr/call-summary",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ivr",
+								"call-summary"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

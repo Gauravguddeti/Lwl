@@ -1,0 +1,5 @@
+# Minimal requirements for AWS Lambda deployment
+boto3>=1.26.0
+botocore>=1.29.0
+reportlab==4.0.8
+email-validator>=2.0.0
