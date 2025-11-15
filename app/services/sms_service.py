@@ -9,6 +9,7 @@ import json
 import boto3
 import logging
 import re
+import os
 from typing import Dict, Any, List, Optional
 
 # Set up logging
@@ -19,8 +20,14 @@ class SMSService:
     """Production-ready SMS Service using Amazon SNS"""
     
     def __init__(self):
-        """Initialize AWS SNS client"""
-        self.sns_client = boto3.client('sns', region_name='us-west-2')
+        """Initialize AWS SNS client with error handling"""
+        try:
+            self.aws_region = os.getenv('AWS_REGION', 'us-west-2')
+            self.sns_client = boto3.client('sns', region_name=self.aws_region)
+            logger.info(f"✅ SMS service initialized for region: {self.aws_region}")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize SNS client: {e}")
+            self.sns_client = None
         
     def send_sms(self, sms_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -33,6 +40,12 @@ class SMSService:
             Dict with success status and message details
         """
         try:
+            if not self.sns_client:
+                return {
+                    'success': False,
+                    'error': 'SNS client not initialized. Check AWS credentials and region.'
+                }
+            
             phone_number = sms_data.get('phone_number')
             message = sms_data.get('message')
             sender_id = sms_data.get('sender_id', 'IVR')
@@ -100,6 +113,12 @@ class SMSService:
             Dict with success status and bulk operation results
         """
         try:
+            if not self.sns_client:
+                return {
+                    'success': False,
+                    'error': 'SNS client not initialized. Check AWS credentials and region.'
+                }
+            
             phone_numbers = sms_data.get('phone_numbers', [])
             message = sms_data.get('message')
             sender_id = sms_data.get('sender_id', 'IVR')
@@ -254,6 +273,15 @@ class SMSService:
             Dict with service status information
         """
         try:
+            if not self.sns_client:
+                return {
+                    'success': False,
+                    'status': 'error',
+                    'error': 'SNS client not initialized. Check AWS credentials and region.',
+                    'service': 'sns-sms',
+                    'region': self.aws_region
+                }
+            
             # Get SMS attributes from SNS
             response = self.sns_client.get_sms_attributes()
             
@@ -261,7 +289,7 @@ class SMSService:
                 'success': True,
                 'status': 'operational',
                 'service': 'sns-sms',
-                'region': 'us-west-2',
+                'region': self.aws_region,
                 'sms_attributes': response.get('attributes', {}),
                 'features': {
                     'single_sms': 'Supported',
