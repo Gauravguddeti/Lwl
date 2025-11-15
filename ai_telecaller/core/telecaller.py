@@ -29,7 +29,7 @@ try:
     from twilio.rest import Client
     TWILIO_AVAILABLE = True
 except ImportError:
-    print("⚠️ Twilio not available - running in demo mode")
+    print("WARNING: Twilio not available - running in demo mode")
     TWILIO_AVAILABLE = False
     VoiceResponse = None
     Client = None
@@ -75,7 +75,7 @@ class TelecallerSystem:
         try:
             self.sock = Sock(self.app)
         except:
-            print("⚠️ Flask-Sock not available - installing via pip...")
+            print("WARNING: Flask-Sock not available - installing via pip...")
             self.sock = None
         
         # Initialize configuration
@@ -115,7 +115,7 @@ class TelecallerSystem:
         self.realtime_handler = RealtimeHandler(self.openai_api_key)
         
         # Deprecated: replaced with OpenAI Realtime WebSocket
-        print("🔄 Using OpenAI Realtime API instead of ChatOpenAI")
+        print("Using OpenAI Realtime API instead of ChatOpenAI")
         self.llm = None  # Deprecated - using OpenAI Realtime WebSocket instead
         
         # Initialize AI conversation service
@@ -147,7 +147,7 @@ class TelecallerSystem:
         self.setup_flask_routes()
         self.setup_websocket_routes()
         
-        print("✅ System initialization complete")
+        print("SUCCESS: System initialization complete")
     
     def build_conversation_graph(self):
         """Build LangGraph conversation flow"""
@@ -371,7 +371,7 @@ class TelecallerSystem:
             if call_sid in self.conversation_states:
                 current_state = self.conversation_states[call_sid]
                 if current_state is None:
-                    print("⚠️ Found None conversation state, creating new one")
+                    print("WARNING: Found None conversation state, creating new one")
                     current_state = self._create_fallback_state(call_sid, user_input)
                 else:
                     # Create new state with caller's message added
@@ -387,7 +387,7 @@ class TelecallerSystem:
             print(f"🎯 Processing: {user_input[:50]}...")
             
             # For all responses, use AI for natural, contextual responses
-            print("🤖 Using AI for contextual response...")
+            print("AI: Using AI for contextual response...")
             ai_response = self.generate_intelligent_response(user_input, current_state)
             
             # Update conversation state with AI response
@@ -404,11 +404,11 @@ class TelecallerSystem:
             current_state["messages"].append({"speaker": "ai", "text": ai_response})
             self.conversation_states[call_sid] = current_state
             
-            print(f"✅ Response generated: {ai_response[:50] if ai_response else 'None'}...")
+            print(f"SUCCESS: Response generated: {ai_response[:50] if ai_response else 'None'}...")
             return ai_response
             
         except Exception as e:
-            print(f"❌ Error processing conversation: {e}")
+            print(f"ERROR: Error processing conversation: {e}")
             import traceback
             traceback.print_exc()
             return "I'm absolutely THRILLED to be talking with you! Could you please repeat that? I want to make sure I give you the most exciting information possible!"
@@ -551,7 +551,7 @@ class TelecallerSystem:
             return f"Perfect! I've noted your email as {recipient_email}. Our team will send you comprehensive program details within the next hour. You'll receive detailed information about our educational programs, pricing, and available dates. Please feel free to contact us if you have any questions after reviewing the information."
                 
         except Exception as e:
-            print(f"❌ Error handling email request: {e}")
+            print(f"ERROR: Error handling email request: {e}")
             return "I apologize, but there was a technical issue with sending the email. Let me take down your contact information and have our team follow up with you directly."
     
     def save_call_recording(self, call_sid, audio_buffer):
@@ -653,7 +653,7 @@ class TelecallerSystem:
             return self.generate_intelligent_response(user_input, fallback_state)
             
         except Exception as e:
-            print(f"❌ Error in fallback response: {e}")
+            print(f"ERROR: Error in fallback response: {e}")
             return "Thank you for sharing that with me. Could you tell me a bit more about what would be most helpful for your institution?"
     
     def generate_fallback_response(self, user_input: str) -> str:
@@ -692,7 +692,7 @@ Generate ONLY the response text:"""
                 return "I want to make sure I give you the right information. What's most important to you?"
                 
         except Exception as e:
-            print(f"❌ Error in fallback response: {e}")
+            print(f"ERROR: Error in fallback response: {e}")
             return "Thank you for that. Could you tell me more about what you're looking for?"
     
     def get_decision_maker_title(self, partner_info: Dict[str, Any]) -> str:
@@ -741,7 +741,7 @@ Generate ONLY the response text:"""
     def demonstrate_getcallstobedone_function(self):
         """Demonstrate scheduled calls functionality"""
         calls = self.get_scheduled_calls_from_database()
-        print(f"📞 Found {len(calls)} scheduled calls")
+        print(f" Found {len(calls)} scheduled calls")
         for i, call in enumerate(calls[:3], 1):  # Show first 3
             print(f"{i}. {call.get('contact_person_name', 'Unknown')} at {call.get('partner_name', 'Unknown')}")
     
@@ -771,10 +771,10 @@ Generate ONLY the response text:"""
     def select_and_call_partner(self, partners: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """Interactive partner selection and calling"""
         if not partners:
-            print("❌ No partners available")
+            print("ERROR: No partners available")
             return None
         
-        print("📋 Available partners:")
+        print(" Available partners:")
         for i, partner in enumerate(partners):
             name = partner.get('partner_name', 'Unknown')
             contact = partner.get('contact', 'No contact')
@@ -788,13 +788,13 @@ Generate ONLY the response text:"""
             partner_index = int(choice) - 1
             return self.call_specific_partner(partners, partner_index)
         except (ValueError, IndexError):
-            print("❌ Invalid selection")
+            print("ERROR: Invalid selection")
             return None
     
     def display_menu(self, partners: List[Dict[str, Any]]):
         """Display interactive menu"""
         print("\\n" + "="*50)
-        print("🤖 AI TELECALLER SYSTEM - MAIN MENU")
+        print("AI: AI TELECALLER SYSTEM - MAIN MENU")
         print("="*50)
         print("1. Call All Partners")
         print("2. Select and Call Specific Partner")
@@ -837,11 +837,11 @@ Generate ONLY the response text:"""
         ]
         
         for user_input in demo_inputs:
-            print(f"\\n👤 USER: {user_input}")
+            print(f"\\nUSER: {user_input}")
             response = self.process_conversation_turn("demo_call", user_input)
-            print(f"🤖 AI: {response}")
+            print(f"AI: {response}")
         
-        print("\\n✅ Demo conversation completed")
+        print("\\nSUCCESS: Demo conversation completed")
     
     def listen_for_openai_responses_separate(self, openai_ws, twilio_ws, stream_sid, call_sid):
         """Listen for OpenAI responses (delegation to realtime handler)"""
@@ -858,13 +858,13 @@ Generate ONLY the response text:"""
     def setup_websocket_routes(self):
         """Setup WebSocket routes for media streaming"""
         if not self.sock:
-            print("⚠️ WebSocket not available - media streaming disabled")
+            print("WARNING: WebSocket not available - media streaming disabled")
             return
         
         @self.sock.route('/media-stream')
         def webhook_stream_handler(ws):
             """Handle Twilio Media Stream WebSocket"""
-            print("🔗 Media stream WebSocket connected!")
+            print(" Media stream WebSocket connected!")
             
             call_sid = None
             stream_sid = None
@@ -877,12 +877,12 @@ Generate ONLY the response text:"""
                     event = data.get('event')
                     
                     if event == 'connected':
-                        print("📞 Twilio Media Stream connected")
+                        print(" Twilio Media Stream connected")
                     
                     elif event == 'start':
                         call_sid = data.get('start', {}).get('callSid')
                         stream_sid = data.get('start', {}).get('streamSid')
-                        print(f"🎵 Media stream started for call: {call_sid}")
+                        print(f" Media stream started for call: {call_sid}")
                         
                         # Get OpenAI connection for this call (check both connection storages)
                         if call_sid in self.openai_connections:
@@ -898,7 +898,7 @@ Generate ONLY the response text:"""
                             # Start audio forwarding loops
                             self.start_audio_loops(ws, openai_connection, stream_sid, call_sid)
                         else:
-                            print(f"⚠️ No OpenAI connection found for call: {call_sid}")
+                            print(f"WARNING: No OpenAI connection found for call: {call_sid}")
                             print(f"🔍 Available connections: {list(self.openai_connections.keys())}")
                             print(f"🔍 Handler connections: {list(self.realtime_handler.connections.keys())}")
                     
@@ -907,11 +907,11 @@ Generate ONLY the response text:"""
                         pass
                     
                     elif event == 'stop':
-                        print(f"🛑 Media stream stopped for call: {call_sid}")
+                        print(f"STOP: Media stream stopped for call: {call_sid}")
                         break
                         
             except Exception as e:
-                print(f"❌ WebSocket error: {e}")
+                print(f"ERROR: WebSocket error: {e}")
                 import traceback
                 traceback.print_exc()
             finally:
@@ -923,7 +923,7 @@ Generate ONLY the response text:"""
             openai_ws = openai_connection['websocket']
             openai_loop = openai_connection['loop']
             
-            print("🎬 STARTING PURE OPENAI REALTIME SYSTEM...")
+            print(" STARTING PURE OPENAI REALTIME SYSTEM...")
             
             # Start DUAL CONCURRENT LOOPS with proper async handling (like original)
             import threading
@@ -946,10 +946,10 @@ Generate ONLY the response text:"""
             # Start OpenAI to Twilio loop (exact approach from original)
             self.realtime_handler.openai_to_twilio_loop(openai_ws, twilio_ws, stream_sid, call_sid, openai_loop)
             
-            print("✅ Call setup complete - audio loops running")
+            print("SUCCESS: Call setup complete - audio loops running")
             
         except Exception as e:
-            print(f"❌ Error starting audio loops: {e}")
+            print(f"ERROR: Error starting audio loops: {e}")
             import traceback
             traceback.print_exc()
     
@@ -1037,7 +1037,7 @@ DATABASE CONTEXT:
 Start immediately with the greeting above and follow the exact flow!"""
             
         except Exception as e:
-            print(f"❌ Error generating system prompt: {e}")
+            print(f"ERROR: Error generating system prompt: {e}")
             return "You are Sarah, a professional telecaller from Learn with Leaders. Be enthusiastic about educational opportunities and follow the conversation flow naturally."
     
     def get_call_context_for_sid(self, call_sid):
@@ -1104,21 +1104,21 @@ Start immediately with the greeting above and follow the exact flow!"""
             result = self.call_storage.finalize_call_enhanced(call_sid, messages, recording_url, partner_name)
             
             if 'error' not in result:
-                print(f"✅ Call finalized with enhanced format:")
+                print(f"SUCCESS: Call finalized with enhanced format:")
                 print(f"   📄 Summary: {result.get('summary_file', 'N/A')}")
                 print(f"   📝 JSON: {result.get('json_file', 'N/A')}")
                 print(f"   🎤 Recording: {result.get('recording_file', 'N/A')}")
-                print(f"   📊 Outcome: {result.get('outcome', 'N/A')}")
+                print(f"    Outcome: {result.get('outcome', 'N/A')}")
                 
                 # Clean up old conversation file
                 if os.path.exists(conversation_file):
                     os.remove(conversation_file)
                     print(f"🧹 Cleaned up temporary conversation file")
             else:
-                print(f"❌ Error in enhanced finalization: {result['error']}")
+                print(f"ERROR: Error in enhanced finalization: {result['error']}")
                 
         except Exception as e:
-            print(f"❌ Error finalizing conversation: {e}")
+            print(f"ERROR: Error finalizing conversation: {e}")
             import traceback
             traceback.print_exc()
     
@@ -1149,18 +1149,18 @@ Start immediately with the greeting above and follow the exact flow!"""
                 
                 if tunnels:
                     self.ngrok_url = tunnels[0]['public_url']
-                    print(f"✅ Ngrok tunnel active: {self.ngrok_url}")
+                    print(f"SUCCESS: Ngrok tunnel active: {self.ngrok_url}")
                     return True
                 else:
-                    print("❌ No ngrok tunnels found")
+                    print("ERROR: No ngrok tunnels found")
                     return False
                     
             except Exception as e:
-                print(f"❌ Error getting ngrok URL: {e}")
+                print(f"ERROR: Error getting ngrok URL: {e}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Error starting ngrok: {e}")
+            print(f"ERROR: Error starting ngrok: {e}")
             return False
     
     def start_flask_server(self):
@@ -1171,12 +1171,12 @@ Start immediately with the greeting above and follow the exact flow!"""
             try:
                 self.app.run(host='0.0.0.0', port=self.flask_port, debug=False, use_reloader=False)
             except Exception as e:
-                print(f"❌ Flask server error: {e}")
+                print(f"ERROR: Flask server error: {e}")
         
         flask_thread = threading.Thread(target=run_flask, daemon=True)
         flask_thread.start()
         time.sleep(2)  # Give Flask time to start
-        print(f"✅ Flask server running on http://localhost:{self.flask_port}")
+        print(f"SUCCESS: Flask server running on http://localhost:{self.flask_port}")
     
     def run_interactive_menu(self):
         """Run the interactive menu"""
@@ -1184,10 +1184,10 @@ Start immediately with the greeting above and follow the exact flow!"""
             partners = self.get_partners_from_database()
             
             if not partners:
-                print("❌ No partners found in database")
+                print("ERROR: No partners found in database")
                 return
             
-            print(f"📊 Found {len(partners)} partners in database")
+            print(f" Found {len(partners)} partners in database")
             
             # Display partners
             for i, partner in enumerate(partners, 1):
@@ -1197,18 +1197,18 @@ Start immediately with the greeting above and follow the exact flow!"""
                 partner_type = partner.get('partner_type', 'unknown')
                 
                 print(f"   {i}. {partner_name}")
-                print(f"      👤 {contact_person} • 📞 {contact_phone} • 🏢 {partner_type}")
+                print(f"      USER: {contact_person} •  {contact_phone} • 🏢 {partner_type}")
             
             print("\n" + "=" * 60)
             print("CALLING OPTIONS:")
             print("=" * 60)
-            print("1. 📞 Call specific partner (enter partner number)")
-            print("2. 📞 Call ALL partners simultaneously")
-            print("3. 🔄 Refresh partner list from database")
-            print("4. 📊 View call storage statistics")
+            print("1.  Call specific partner (enter partner number)")
+            print("2.  Call ALL partners simultaneously")
+            print("3.  Refresh partner list from database")
+            print("4.  View call storage statistics")
             print("\n" + "=" * 60)
             print("7. 🔍 Demonstrate getcallstobedone function LIVE")
-            print("8. 📞 Call scheduled contacts with timezone greetings")
+            print("8.  Call scheduled contacts with timezone greetings")
             print("9. 🧪 Test timezone greeting system")
             print("\n" + "=" * 60)
             print("10. 🚪 Exit system")
@@ -1226,15 +1226,15 @@ Start immediately with the greeting above and follow the exact flow!"""
                             idx = int(partner_num) - 1
                             if 0 <= idx < len(partners):
                                 result = self.call_specific_partner(partners, idx)
-                                print(f"📞 Call result: {result}")
+                                print(f" Call result: {result}")
                             else:
-                                print("❌ Invalid partner number")
+                                print("ERROR: Invalid partner number")
                         except ValueError:
-                            print("❌ Please enter a valid number")
+                            print("ERROR: Please enter a valid number")
                     
                     elif choice == "2":
                         results = self.call_all_partners(partners)
-                        print(f"📞 Called {len(results)} partners")
+                        print(f" Called {len(results)} partners")
                         for result in results:
                             status = result.get('status', 'unknown')
                             partner = result.get('partner_name', 'Unknown')
@@ -1242,18 +1242,18 @@ Start immediately with the greeting above and follow the exact flow!"""
                     
                     elif choice == "3":
                         partners = self.get_partners_from_database()
-                        print(f"🔄 Refreshed: {len(partners)} partners loaded")
+                        print(f" Refreshed: {len(partners)} partners loaded")
                     
                     else:
-                        print("❌ Invalid choice. Please try again.")
+                        print("ERROR: Invalid choice. Please try again.")
                         
                 except KeyboardInterrupt:
                     break
                 except Exception as e:
-                    print(f"❌ Error: {e}")
+                    print(f"ERROR: Error: {e}")
         
         except Exception as e:
-            print(f"❌ Menu error: {e}")
+            print(f"ERROR: Menu error: {e}")
     
     def call_specific_partner(self, partners: List[Dict[str, Any]], partner_index: int) -> Dict[str, Any]:
         """Call a specific partner by index"""
@@ -1276,24 +1276,24 @@ Start immediately with the greeting above and follow the exact flow!"""
     
     def shutdown(self):
         """Shutdown the system"""
-        print("🛑 Shutting down system...")
+        print("STOP: Shutting down system...")
         
         # Close ngrok tunnel
         if self.ngrok_process:
             self.ngrok_process.terminate()
-            print("✅ Ngrok tunnel closed")
+            print("SUCCESS: Ngrok tunnel closed")
         
         # Clean up OpenAI connections
         for call_sid in list(self.realtime_handler.connections.keys()):
             self.realtime_handler.cleanup_connection(call_sid)
         
-        print("✅ System shutdown complete")
+        print("SUCCESS: System shutdown complete")
     
     def setup_flask_routes(self):
         """Setup Flask routes (compatibility method - actual routes handled by WebhookHandler)"""
         # In the modular system, Flask routes are handled by WebhookHandler
         # This method exists for compatibility with the monolithic system interface
-        print("🔗 Flask routes handled by WebhookHandler")
+        print(" Flask routes handled by WebhookHandler")
         pass
 
 # Create system instance
