@@ -37,9 +37,16 @@ class SESTemplatedEmailService:
     
     def __init__(self):
         """Initialize SES client and configuration"""
-        self.aws_region = os.getenv('AWS_REGION', 'us-west-2')
-        self.ses_client = boto3.client('ses', region_name=self.aws_region)
-        self.default_sender = os.getenv('SES_SENDER_EMAIL', 'support@f5universe.com')
+        try:
+            self.aws_region = os.getenv('AWS_REGION', 'us-west-2')
+            self.ses_client = boto3.client('ses', region_name=self.aws_region)
+            self.default_sender = os.getenv('SES_SENDER_EMAIL', 'support@f5universe.com')
+            logger.info(f"✅ SES Templated Email service initialized for region: {self.aws_region}")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize SES client: {e}")
+            self.ses_client = None
+            self.aws_region = os.getenv('AWS_REGION', 'us-west-2')
+            self.default_sender = os.getenv('SES_SENDER_EMAIL', 'support@f5universe.com')
         
         # Default brand settings
         self.default_brand_logo = "https://app.chatmaven.ai/assets/logo.png"
@@ -54,6 +61,13 @@ class SESTemplatedEmailService:
         Returns:
             Dict with creation status for each template
         """
+        if not self.ses_client:
+            return {
+                'success': False,
+                'error': 'SES client not initialized. Check AWS credentials and region.',
+                'results': {}
+            }
+        
         results = {}
         
         # Template configurations
