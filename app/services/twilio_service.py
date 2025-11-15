@@ -28,6 +28,8 @@ class TwilioConfig:
         
         # Check if we have real credentials (not placeholders)
         self.is_configured = (
+            self.account_sid and 
+            self.auth_token and
             not self.account_sid.startswith('your_') and
             not self.auth_token.startswith('your_') and
             self.account_sid.startswith('AC')  # Valid Twilio Account SID format
