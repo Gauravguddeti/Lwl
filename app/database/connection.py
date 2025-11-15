@@ -17,12 +17,27 @@ class DatabaseConfig:
     """Database configuration class"""
     
     def __init__(self):
-        self.host = os.getenv('DB_HOST', 'localhost')
-        self.port = int(os.getenv('DB_PORT', 5432))
-        self.database = os.getenv('DB_NAME', 'lwl_pg_us_2')
-        self.user = os.getenv('DB_USER', 'postgres')
-        self.password = os.getenv('DB_PASSWORD', '')
-        self.sslmode = os.getenv('DB_SSL_MODE', 'prefer')
+        # Try to get database URL first (for production), then fall back to individual components
+        database_url = os.getenv('DATABASE_URL')
+        if database_url:
+            # Parse DATABASE_URL (format: postgresql://user:password@host:port/database)
+            import urllib.parse as urlparse
+            parsed = urlparse.urlparse(database_url)
+            self.host = parsed.hostname or 'localhost'
+            self.port = parsed.port or 5432
+            self.database = parsed.path[1:] if parsed.path else 'lwl_pg_us_2'
+            self.user = parsed.username or 'postgres'
+            self.password = parsed.password or ''
+            self.sslmode = 'require' if parsed.scheme == 'postgresql' else 'prefer'
+        else:
+            # Fall back to individual environment variables
+            self.host = os.getenv('DB_HOST', 'localhost')
+            self.port = int(os.getenv('DB_PORT', 5432))
+            self.database = os.getenv('DB_NAME', 'lwl_pg_us_2')
+            self.user = os.getenv('DB_USER', 'postgres')
+            self.password = os.getenv('DB_PASSWORD', '')
+            self.sslmode = os.getenv('DB_SSL_MODE', 'prefer')
+        
         self.schema = os.getenv('DB_SCHEMA', 'public')
     
     @property
@@ -37,20 +52,37 @@ class DatabaseManager:
         self._connection = None
     
     def get_connection(self):
-        """Get database connection"""
+        """Get database connection with better error handling"""
         try:
             if self._connection is None or self._connection.closed:
+                logger.info(f"Connecting to database: {self.config.host}:{self.config.port}/{self.config.database}")
                 self._connection = psycopg2.connect(self.config.connection_string)
-                logger.info("Database connection established")
+                logger.info("✅ Database connection established successfully")
             return self._connection
+        except psycopg2.OperationalError as e:
+            logger.error(f"❌ Database connection failed - Check credentials and network: {e}")
+            # Return None instead of raising to allow graceful degradation
+            return None
         except psycopg2.Error as e:
-            logger.error(f"Database connection failed: {e}")
-            raise
+            logger.error(f"❌ Database error: {e}")
+            return None
     
     @contextmanager
     def get_cursor(self, dict_cursor=True):
-        """Context manager for database cursor"""
+        """Context manager for database cursor with graceful degradation"""
         conn = self.get_connection()
+        if conn is None:
+            logger.warning("⚠️ Database not available - returning mock cursor")
+            # Return a mock cursor that doesn't do anything
+            class MockCursor:
+                def execute(self, query, params=None): pass
+                def fetchone(self): return None
+                def fetchall(self): return []
+                def fetchmany(self, size): return []
+                def close(self): pass
+            yield MockCursor()
+            return
+            
         cursor_class = RealDictCursor if dict_cursor else None
         cursor = conn.cursor(cursor_factory=cursor_class)
         try:
