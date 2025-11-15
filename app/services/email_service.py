@@ -24,8 +24,14 @@ class EmailService:
     """Production-ready Email Service supporting multiple providers"""
     
     def __init__(self):
-        """Initialize AWS SES client"""
-        self.ses_client = boto3.client('ses', region_name=os.getenv('AWS_REGION', 'us-west-2'))
+        """Initialize AWS SES client with error handling"""
+        try:
+            self.aws_region = os.getenv('AWS_REGION', 'us-west-2')
+            self.ses_client = boto3.client('ses', region_name=self.aws_region)
+            logger.info(f"✅ Email service initialized for region: {self.aws_region}")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize SES client: {e}")
+            self.ses_client = None
         
     def send_email(self, email_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -130,6 +136,12 @@ class EmailService:
     def _send_ses_custom_domain_email(self, email_data: Dict[str, Any]) -> Dict[str, Any]:
         """Send email using SES with custom domain (f5universe.com)"""
         try:
+            if not self.ses_client:
+                return {
+                    'success': False,
+                    'error': 'SES client not initialized. Check AWS credentials and region.'
+                }
+            
             sender_email = email_data.get('sender_email', 'support@f5universe.com')
             
             # For attachments, use raw email
@@ -171,6 +183,12 @@ class EmailService:
     def _send_ses_subdomain_email(self, email_data: Dict[str, Any]) -> Dict[str, Any]:
         """Send email using SES with subdomain (mail.futuristic5.com)"""
         try:
+            if not self.ses_client:
+                return {
+                    'success': False,
+                    'error': 'SES client not initialized. Check AWS credentials and region.'
+                }
+            
             sender_email = email_data.get('sender_email', 'noreply@mail.futuristic5.com')
             
             # For attachments, use raw email
@@ -286,6 +304,18 @@ class EmailService:
     def get_service_status(self) -> Dict[str, Any]:
         """Get email service status"""
         try:
+            if not self.ses_client:
+                return {
+                    'success': False,
+                    'status': 'error',
+                    'error': 'SES client not initialized. Check AWS credentials and region.',
+                    'providers': {
+                        'smtp': 'Available (Gmail)',
+                        'ses_custom': 'Unavailable (SES not configured)',
+                        'ses_subdomain': 'Unavailable (SES not configured)'
+                    }
+                }
+            
             # Test SES connectivity
             response = self.ses_client.get_send_quota()
             
