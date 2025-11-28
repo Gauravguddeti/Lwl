@@ -1,0 +1,15 @@
+# Lambda Dependencies
+# ===================
+
+# AWS SDK
+boto3==1.34.144
+botocore==1.34.144
+
+# Twilio (for voice calls)
+twilio==9.7.0
+
+# Database
+psycopg2-binary==2.9.9
+
+# Utilities
+python-dateutil==2.9.0.post0
