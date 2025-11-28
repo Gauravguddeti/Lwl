@@ -1,0 +1,13 @@
+in flask app at line 130 and 131:
+            account_sid = os.getenv('TWILIO_ACCOUNT_SID', 'ACfbc0177c5d3585d8a7f48350c77e03a0')
+            auth_token = os.getenv('TWILIO_AUTH_TOKEN', 'd84fa82614cdb877f68f07cf2ece1b4f')
+
+in twilio service.py at line 18,19,20:
+        self.account_sid = os.getenv('TWILIO_ACCOUNT_SID', 'ACfbc0177c5d3585d8a7f48350c77e03a0')
+        self.auth_token = os.getenv('TWILIO_AUTH_TOKEN', 'd84fa82614cdb877f68f07cf2ece1b4f') 
+        self.phone_number = os.getenv('TWILIO_PHONE_NUMBER', '+18455249674')
+in settings.py line 18 20:
+        self.twilio_account_sid = os.getenv('TWILIO_ACCOUNT_SID', 'AC6854a36835e27ea8993f4e81b72afec8')
+        self.twilio_auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+        self.twilio_phone_number = os.getenv('TWILIO_PHONE_NUMBER', '+15186679988')
+ 
