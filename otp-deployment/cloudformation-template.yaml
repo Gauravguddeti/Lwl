@@ -1,0 +1,245 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'OTP API Service for IVR Integration'
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    Description: Deployment stage
+    AllowedValues: [dev, staging, prod]
+  
+  SenderID:
+    Type: String
+    Default: EDUOTP
+    Description: Default sender ID for OTP messages
+    MaxLength: 11
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.12
+    Environment:
+      Variables:
+        AWS_REGION: !Ref AWS::Region
+        STAGE: !Ref Stage
+
+Resources:
+  # Lambda Function
+  OTPHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'otp-api-handler-${Stage}'
+      CodeUri: src/
+      Handler: handler.lambda_handler
+      Description: 'OTP API Handler for sending and verifying OTPs'
+      Policies:
+        - SNSPublishPolicy:
+            TopicName: !Sub 'otp-topic-${Stage}'
+        - SNSGetSMSAttributesPolicy: {}
+        - SNSSetSMSAttributesPolicy: {}
+      Events:
+        # GET /otp/status
+        StatusGet:
+          Type: Api
+          Properties:
+            Path: /otp/status
+            Method: get
+            RestApiId: !Ref OTPAPI
+        # GET /otp/status/{otp_id}
+        StatusGetWithId:
+          Type: Api
+          Properties:
+            Path: /otp/status/{otp_id}
+            Method: get
+            RestApiId: !Ref OTPAPI
+        # POST /otp/send
+        SendPost:
+          Type: Api
+          Properties:
+            Path: /otp/send
+            Method: post
+            RestApiId: !Ref OTPAPI
+        # POST /otp/verify
+        VerifyPost:
+          Type: Api
+          Properties:
+            Path: /otp/verify
+            Method: post
+            RestApiId: !Ref OTPAPI
+        # OPTIONS for CORS
+        OptionsStatus:
+          Type: Api
+          Properties:
+            Path: /otp/status
+            Method: options
+            RestApiId: !Ref OTPAPI
+        OptionsSend:
+          Type: Api
+          Properties:
+            Path: /otp/send
+            Method: options
+            RestApiId: !Ref OTPAPI
+        OptionsVerify:
+          Type: Api
+          Properties:
+            Path: /otp/verify
+            Method: options
+            RestApiId: !Ref OTPAPI
+
+  # API Gateway
+  OTPAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub 'otp-api-${Stage}'
+      StageName: !Ref Stage
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: OTP API
+          version: '1.0'
+        paths:
+          /otp/status:
+            get:
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OTPHandlerFunction}/invocations'
+            options:
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS'"
+                passthroughBehavior: when_no_match
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: true
+                      method.response.header.Access-Control-Allow-Origin: true
+                      method.response.header.Access-Control-Allow-Methods: true
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+          /otp/status/{otp_id}:
+            get:
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OTPHandlerFunction}/invocations'
+          /otp/send:
+            post:
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OTPHandlerFunction}/invocations'
+            options:
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS'"
+                passthroughBehavior: when_no_match
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: true
+                      method.response.header.Access-Control-Allow-Origin: true
+                      method.response.header.Access-Control-Allow-Methods: true
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+          /otp/verify:
+            post:
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${OTPHandlerFunction}/invocations'
+            options:
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,OPTIONS'"
+                passthroughBehavior: when_no_match
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: true
+                      method.response.header.Access-Control-Allow-Origin: true
+                      method.response.header.Access-Control-Allow-Methods: true
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+
+Outputs:
+  ApiGatewayUrl:
+    Description: 'API Gateway endpoint URL'
+    Value: !Sub 'https://${OTPAPI}.execute-api.${AWS::Region}.amazonaws.com/${Stage}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+  
+  LambdaFunctionArn:
+    Description: 'Lambda Function ARN'
+    Value: !GetAtt OTPHandlerFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaArn'
+  
+  SNS TopicArn:
+    Description: 'SNS Topic ARN'
+    Value: !Ref OTPTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-SNSTopicArn'
