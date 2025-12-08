@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'OTP API Service for IVR Integration - Corrected SAM Template'
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.12
+    Environment:
+      Variables:
+        AWS_REGION: !Ref AWS::Region
+
+Resources:
+  OTPAPI:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Description: 'OTP API Handler for sending and verifying OTPs'
+      MemorySize: 512
+      Timeout: 30
+      Handler: handler.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      PackageType: Zip
+      Policies:
+        - SNSPublishPolicy:
+            TopicName: !Sub 'otp-topic-${AWS::StackName}'
+        - SNSGetSMSAttributesPolicy: {}
+        - SNSSetSMSAttributesPolicy: {}
+        - Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: '*'
+      Events:
+        # GET /otp/status
+        StatusGet:
+          Type: Api
+          Properties:
+            Path: /otp/status
+            Method: get
+        # GET /otp/status/{otp_id}
+        StatusGetWithId:
+          Type: Api
+          Properties:
+            Path: /otp/status/{otp_id}
+            Method: get
+        # POST /otp/send
+        SendPost:
+          Type: Api
+          Properties:
+            Path: /otp/send
+            Method: post
+        # POST /otp/verify
+        VerifyPost:
+          Type: Api
+          Properties:
+            Path: /otp/verify
+            Method: post
+        # OPTIONS for CORS
+        OptionsStatus:
+          Type: Api
+          Properties:
+            Path: /otp/status
+            Method: options
+        OptionsSend:
+          Type: Api
+          Properties:
+            Path: /otp/send
+            Method: options
+        OptionsVerify:
+          Type: Api
+          Properties:
+            Path: /otp/verify
+            Method: options
+
+  # SNS Topic for OTP
+  OTPTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'otp-topic-${AWS::StackName}'
+      DisplayName: !Sub 'OTP API Topic - ${AWS::StackName}'
+
+Outputs:
+  ApiGatewayUrl:
+    Description: 'API Gateway endpoint URL'
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiUrl'
+  
+  LambdaFunctionArn:
+    Description: 'Lambda Function ARN'
+    Value: !GetAtt OTPAPI.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaArn'
+  
+  SNS TopicArn:
+    Description: 'SNS Topic ARN'
+    Value: !Ref OTPTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-SNSTopicArn'
