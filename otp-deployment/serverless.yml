@@ -1,0 +1,106 @@
+service: otp-api-service
+
+provider:
+  name: aws
+  runtime: python3.12
+  region: us-west-2
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512
+  timeout: 30
+  environment:
+    AWS_REGION: ${self:provider.region}
+    STAGE: ${self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - sns:Publish
+        - sns:GetSMSAttributes
+        - sns:SetSMSAttributes
+      Resource: "*"
+
+functions:
+  otpHandler:
+    handler: src/handler.lambda_handler
+    name: ${self:service}-${self:provider.stage}-otp-handler
+    description: "OTP API Handler for sending and verifying OTPs"
+    events:
+      - http:
+          path: /otp/status
+          method: get
+          cors: true
+      - http:
+          path: /otp/status/{otp_id}
+          method: get
+          cors: true
+      - http:
+          path: /otp/send
+          method: post
+          cors: true
+      - http:
+          path: /otp/verify
+          method: post
+          cors: true
+      - http:
+          path: /otp
+          method: options
+          cors: true
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    slim: true
+    strip: false
+    noDeps:
+      - boto3
+      - botocore
+
+package:
+  exclude:
+    - .git/**
+    - .gitignore
+    - README.md
+    - tests/**
+    - .env
+    - .env.local
+    - node_modules/**
+    - .serverless/**
+
+resources:
+  Resources:
+    # CloudWatch Log Group
+    OTPLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/${self:service}-${self:provider.stage}-otp-handler
+        RetentionInDays: 14
+
+    # SNS Topic for OTP (optional)
+    OTPTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-otp-topic
+        DisplayName: OTP API Topic
+
+  Outputs:
+    ApiGatewayRestApiId:
+      Value:
+        Ref: ApiGatewayRestApi
+      Export:
+        Name: ${self:service}-${self:provider.stage}-restApiId
+
+    ApiGatewayRestApiRootResourceId:
+      Value:
+        Fn::GetAtt:
+          - ApiGatewayRestApi
+          - RootResourceId
+      Export:
+        Name: ${self:service}-${self:provider.stage}-rootResourceId
+
+    OTPHandlerLambdaFunctionQualifiedArn:
+      Value:
+        Ref: OTPHandlerLambdaVersion
+      Export:
+        Name: ${self:service}-${self:provider.stage}-lambdaArn
