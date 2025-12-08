@@ -1,0 +1,12 @@
+# AWS OTP API Lambda Function Requirements
+# Core dependencies
+boto3>=1.34.0
+botocore>=1.34.0
+
+# Optional: For enhanced logging and monitoring
+structlog>=23.1.0
+
+# Development dependencies (not included in Lambda package)
+# pytest>=7.4.0
+# pytest-cov>=4.1.0
+# moto>=4.2.0
