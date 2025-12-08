@@ -1,0 +1,30 @@
+{
+  "name": "otp-api-service",
+  "version": "1.0.0",
+  "description": "AWS Lambda OTP API Service for IVR Integration",
+  "main": "src/handler.py",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod",
+    "remove": "serverless remove",
+    "logs": "serverless logs -f otpHandler",
+    "test": "python -m pytest tests/",
+    "test:local": "python src/handler.py"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-python-requirements": "^6.0.0"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "otp",
+    "sns",
+    "api",
+    "ivr",
+    "verification"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
